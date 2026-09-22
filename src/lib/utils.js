@@ -51,5 +51,12 @@ export function colorSwatchClass(hex, selected = false) {
         : 'border-line hover:scale-110'
   )
 }
-export const statusColor = s => ({ pending:'bg-yellow-100 text-yellow-700', paid:'bg-green-100 text-green-700', shipped:'bg-blue-100 text-blue-700', delivered:'bg-emerald-100 text-emerald-700', cancelled:'bg-red-100 text-red-700', refunded:'bg-orange-100 text-orange-700' }[s] || 'bg-gray-100 text-gray-700')
-export const statusLabel = s => s.charAt(0).toUpperCase() + s.slice(1)
+export const statusColor = s => ({ pending:'bg-yellow-100 text-yellow-700', paid:'bg-green-100 text-green-700', shipped:'bg-blue-100 text-blue-700', delivered:'bg-emerald-100 text-emerald-700', cancelled:'bg-red-100 text-red-700', refunded:'bg-orange-100 text-orange-700', requested:'bg-yellow-100 text-yellow-700', approved:'bg-green-100 text-green-700', rejected:'bg-red-100 text-red-700', active:'bg-green-100 text-green-700', inactive:'bg-gray-100 text-gray-700', draft:'bg-yellow-100 text-yellow-700' }[s] || 'bg-gray-100 text-gray-700')
+export function statusLabel(s) {
+  if (!s) return ''
+  return String(s)
+    .replace(/[_-]+/g, ' ')
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ')
+}

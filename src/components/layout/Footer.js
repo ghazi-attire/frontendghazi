@@ -13,17 +13,15 @@ import toast from 'react-hot-toast'
 export default function Footer() {
   const staticCols = {
     Company: [
-      ['About-Us', '#'],
-      ['Blog', '#'],
-      ['Privacy Policy', '#'],
-      ['Terms & Conditions', '#'],
-      ['Work With Us', '#'],
+      ['About Us', '/about'],
+      ['Shop All', '/plp'],
+      ['Shipping Policy', '/shipping-policy'],
+      ['Refund / Return Policy', '/refund-policy'],
     ],
     Customers: [
-      ['Contact Us', '#'],
-      ['FAQs', '#'],
-      ['Shipping Policy', '#'],
-      ['Refund Policy', '#'],
+      ['Contact Us', '/contact'],
+      ['My Orders', '/profile?tab=orders'],
+      ['Returns & Exchanges', '/profile?tab=returns'],
     ],
   }
   const socials = [
@@ -56,9 +54,9 @@ export default function Footer() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-5">
               <Link href="/" className="shrink-0 inline-block">
                 {branding.logoUrl ? (
-                  <img src={branding.logoUrl} alt="Ghazi Attire" className="h-12 max-w-[180px] object-contain" />
+                  <img src={branding.logoUrl} alt="Ghazi Attire" className="h-14 sm:h-18 max-w-[240px] sm:max-w-[320px] object-contain object-left" />
                 ) : (
-                  <span className="font-display text-2xl font-black tracking-wider text-white">GHAZI ATTIRE</span>
+                  <span className="font-display text-2xl sm:text-3xl font-black tracking-wider text-white">GHAZI ATTIRE</span>
                 )}
               </Link>
               <div className="hidden sm:block h-10 w-[1px] bg-white/25" />
@@ -71,17 +69,22 @@ export default function Footer() {
           <div>
             <p className="mb-3 text-sm font-extrabold uppercase tracking-wide text-white">Spot Us On</p>
             <div className="footer-socials grid grid-cols-4 border border-white/35">
-              {socials.map(([label, Icon]) => (
-                <a
-                  key={label}
-                  href={content.social?.[label.toLowerCase().replace('twitter', 'twitter').replace('whatsapp', 'whatsapp')] || '#'}
-                  aria-label={label}
-                  className="group flex min-h-16 items-center justify-center gap-2 border-r border-white/35 px-2 text-white transition-colors hover:bg-white/15 last:border-r-0 sm:gap-4 sm:px-5"
-                >
-                  <Icon size={24} strokeWidth={2.4} className="transition-transform group-hover:scale-110" />
-                  <span className="hidden text-sm font-extrabold uppercase tracking-wide sm:inline">{label}</span>
-                </a>
-              ))}
+              {socials.map(([label, Icon]) => {
+                const url = content.social?.[label.toLowerCase().replace('twitter', 'twitter').replace('whatsapp', 'whatsapp')] || '#'
+                const isExternal = url && url !== '#'
+                return (
+                  <a
+                    key={label}
+                    href={url}
+                    {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    aria-label={label}
+                    className="group flex min-h-16 items-center justify-center gap-2 border-r border-white/35 px-2 text-white transition-colors hover:bg-white/15 last:border-r-0 sm:gap-4 sm:px-5"
+                  >
+                    <Icon size={24} strokeWidth={2.4} className="transition-transform group-hover:scale-110" />
+                    <span className="hidden text-sm font-extrabold uppercase tracking-wide sm:inline">{label}</span>
+                  </a>
+                )
+              })}
             </div>
           </div>
 

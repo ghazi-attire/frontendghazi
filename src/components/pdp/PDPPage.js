@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'rea
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Star, Truck, RefreshCw, ShieldCheck, X, Heart, ShoppingCart, Zap } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Star, Truck, RefreshCw, ShieldCheck, X, Heart, ShoppingCart, Zap } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { catalogApi } from '@/lib/api'
 import { useStore } from '@/context/StoreContext'
 import { useWishlist } from '@/context/WishlistContext'
@@ -96,25 +97,9 @@ function getSizesForColor(product, color) {
   return product.sizes || []
 }
 
-function getHeightsForColorSize(product, color, size) {
-  if (!product?.variants?.length || !color || !size) return []
-  const heights = product.variants
-    .filter(v => v.color === color.name && v.hex === color.hex && v.size === size)
-    .map(v => ({ height: v.height || '', sku: v.sku || '', stock: Number(v.stock || 0), mrp: Number(v.mrp || 0), sellPrice: Number(v.sellPrice || 0) }))
-  // Dedupe by height string (allow empty = no-height)
-  const map = new Map()
-  heights.forEach(h => { const k = String(h.height || ''); if (!map.has(k)) map.set(k, h) })
-  return [...map.values()]
-}
-
-function getVariantForSelection(product, color, size, height) {
+function getVariantForSelection(product, color, size) {
   if (!product?.variants?.length) return null
-  const h = String(height || '').trim()
-  return product.variants.find(v => v.color === color?.name && v.hex === color?.hex && v.size === size && String(v.height || '').trim() === h) || null
-}
-
-function hasHeights(product) {
-  return Array.isArray(product?.variants) && product.variants.some(v => String(v.height || '').trim().length > 0)
+  return product.variants.find(v => v.color === color?.name && v.hex === color?.hex && v.size === size) || null
 }
 
 function getColorImageIndex(product, color) {
@@ -478,7 +463,10 @@ function PDPContent() {
 
   const [selColor, setSelColor] = useState({ name: 'Unknown', hex: '#000000' })
   const [selSize,  setSelSize]  = useState({ size: 'One Size', stock: 1, mrp: 0, sellPrice: 0 })
-  const [selHeight, setSelHeight] = useState(null)
+  const [selHeight, setSelHeight] = useState('')
+  const [globalHeights, setGlobalHeights] = useState([])
+  const [heightError, setHeightError] = useState(false)
+  const heightSelectRef = useRef(null)
   const [qty,      setQty]      = useState(1)
   const [mainImg,  setMainImg]  = useState(0)
   const [tab,      setTab]      = useState('desc')
@@ -495,17 +483,17 @@ function PDPContent() {
     })
   }, [product?.colors])
   const sizesForColor = useMemo(() => getSizesForColor(product, selColor), [product, selColor])
-  const heightsForSelection = useMemo(() => getHeightsForColorSize(product, selColor, selSize?.size), [product, selColor, selSize?.size])
-  const showHeightSelector = useMemo(() => hasHeights(product), [product])
-  const selectedVariant = useMemo(() => getVariantForSelection(product, selColor, selSize?.size, selHeight), [product, selColor, selSize, selHeight])
+  const selectedVariant = useMemo(() => getVariantForSelection(product, selColor, selSize?.size), [product, selColor, selSize])
   const isOOS     = !product || product.stock === 0 || product.isInStock === false
   const sizeStock = selectedVariant?.stock ?? selSize?.stock ?? 0
-  const heightStock = selectedVariant ? Number(selectedVariant.stock || 0) : (heightsForSelection.length === 0 ? sizeStock : 0)
 
   useEffect(() => {
     catalogApi.home()
       .then(data => setShippingConfig(data.shipping || { fee: 149, freeThreshold: 999, validUntil: '' }))
       .catch(() => setShippingConfig({ fee: 149, freeThreshold: 999, validUntil: '' }))
+    catalogApi.heights()
+      .then(data => setGlobalHeights(Array.isArray(data) ? data : []))
+      .catch(() => setGlobalHeights([]))
   }, [])
 
   useEffect(() => {
@@ -520,14 +508,6 @@ function PDPContent() {
     const initialSizes = getSizesForColor(product, firstColor)
     const firstSize = initialSizes.find(s => s?.stock > 0) || initialSizes[0] || { size: 'One Size', stock: 1 }
     setSelSize(firstSize)
-    // Initialize height for first color+size
-    const initialHeights = getHeightsForColorSize(product, firstColor, firstSize.size)
-    if (initialHeights.length > 0) {
-      const firstInStock = initialHeights.find(h => Number(h.stock) > 0) || initialHeights[0]
-      setSelHeight(firstInStock.height || null)
-    } else {
-      setSelHeight(null)
-    }
     setQty(1)
     setMainImg(getColorImageIndex(product, firstColor))
     catalogApi.products({ category: product.category, limit: 6 }).then(data => {
@@ -540,26 +520,12 @@ function PDPContent() {
     const nextSizes = getSizesForColor(product, color)
     const nextSize = nextSizes.find(s => s?.stock > 0) || nextSizes[0] || { size: 'One Size', stock: 0, mrp: product.mrp, sellPrice: product.sellPrice }
     setSelSize(nextSize)
-    const nextHeights = getHeightsForColorSize(product, color, nextSize.size)
-    if (nextHeights.length > 0) {
-      const firstInStock = nextHeights.find(h => Number(h.stock) > 0) || nextHeights[0]
-      setSelHeight(firstInStock.height || null)
-    } else {
-      setSelHeight(null)
-    }
     setQty(1)
     setMainImg(getColorImageIndex(product, color))
   }
 
   const handleSizeSelect = (sizeObj) => {
     setSelSize(sizeObj)
-    const nextHeights = getHeightsForColorSize(product, selColor, sizeObj.size)
-    if (nextHeights.length > 0) {
-      const firstInStock = nextHeights.find(h => Number(h.stock) > 0) || nextHeights[0]
-      setSelHeight(firstInStock.height || null)
-    } else {
-      setSelHeight(null)
-    }
     setQty(1)
   }
 
@@ -576,20 +542,30 @@ function PDPContent() {
   const variantPrices = getSelectedVariantPrices()
   const discount = variantPrices.mrp > 0 ? Math.round(((variantPrices.mrp - variantPrices.sellPrice) / variantPrices.mrp) * 100) : 0
 
-  const handleCart = () => {
-    if (isOOS) return
-    const stockToCheck = selectedVariant ? Number(selectedVariant.stock || 0) : sizeStock
-    if (stockToCheck === 0) return
-    if (showHeightSelector && heightsForSelection.length > 0 && (selHeight === null || selHeight === undefined)) {
-      return
+  const validateHeight = () => {
+    const trimmed = String(selHeight || '').trim()
+    if (!trimmed) {
+      setHeightError(true)
+      toast.error('Please select your height')
+      if (heightSelectRef.current) {
+        heightSelectRef.current.focus()
+      }
+      return false
     }
-    addToCart(product, selSize.size, selColor, qty, selHeight || null, null)
+    setHeightError(false)
+    return true
+  }
+
+  const handleCart = () => {
+    if (isOOS || sizeStock === 0) return
+    if (!validateHeight()) return
+    addToCart({ ...product, sellPrice: variantPrices.sellPrice, mrp: variantPrices.mrp }, selSize.size, selColor, qty, selHeight, null)
   }
   const handleBuyNow = () => {
-    handleCart()
-    if (!isOOS && sizeStock!==0 && !(showHeightSelector && heightsForSelection.length>0 && !selHeight)) {
-      router.push('/checkout')
-    }
+    if (isOOS || sizeStock === 0) return
+    if (!validateHeight()) return
+    addToCart({ ...product, sellPrice: variantPrices.sellPrice, mrp: variantPrices.mrp }, selSize.size, selColor, qty, selHeight, null)
+    router.push('/checkout')
   }
 
   if (!product) return <div className="py-20 text-center text-ink-muted">Loading product...</div>
@@ -724,26 +700,44 @@ function PDPContent() {
                 </button>
               ))}
             </div>
-            {/* Height — only when product has height variants */}
-            {showHeightSelector && heightsForSelection.length > 0 && (
-              <div className="mt-5">
-                <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-ink-mid mb-2.5">
-                  Height — <span className="text-ink font-semibold">{selHeight || 'Select Height'}</span>
-                </p>
-                <div className="flex gap-2 flex-wrap">
-                  {heightsForSelection.map(h => (
-                    <button key={h.height || 'no-height'} onClick={() => h.stock>0 && setSelHeight(h.height || null)} disabled={h.stock===0}
-                      className={`min-w-[64px] h-11 px-3 rounded-xl text-[13px] font-semibold border-2 transition-all flex items-center justify-center ${
-                        h.stock===0 ? 'border-line text-ink-faint line-through cursor-not-allowed bg-surface-alt'
-                        : selHeight === h.height ? 'border-primary bg-primary text-white shadow-md'
-                        : 'border-line text-ink-mid hover:border-primary hover:text-primary'
-                      }`}>
-                      <span>{h.height || 'Standard'}</span>
-                    </button>
+            {/* Height — Mandatory selection from global heights */}
+            <div className="mt-5">
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="height-select" className="text-[12px] uppercase tracking-[0.12em] font-semibold text-ink-mid">
+                  Height <span className="text-red-500 font-bold">*</span>
+                </label>
+                {selHeight ? (
+                  <span className="text-[12px] font-bold text-primary">{selHeight}</span>
+                ) : (
+                  <span className="text-[11px] font-medium text-ink-muted">Required</span>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  id="height-select"
+                  ref={heightSelectRef}
+                  value={selHeight || ''}
+                  onChange={(e) => {
+                    setSelHeight(e.target.value || '')
+                    if (e.target.value) setHeightError(false)
+                  }}
+                  className={`w-full h-11 px-3.5 pr-10 rounded-xl border-2 bg-surface-alt text-[13px] font-semibold text-ink outline-none transition-all appearance-none cursor-pointer ${
+                    heightError ? 'border-red-500 ring-2 ring-red-100 bg-red-50/20' : 'border-line hover:border-primary/50 focus:border-primary'
+                  }`}
+                >
+                  <option value="">Select Height</option>
+                  {globalHeights.map(h => (
+                    <option key={h.id || h.height} value={h.height}>{h.height}</option>
                   ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-ink-muted">
+                  <ChevronDown size={16} />
                 </div>
               </div>
-            )}
+              {heightError && (
+                <p className="mt-1.5 text-xs font-semibold text-red-500">Please select your height</p>
+              )}
+            </div>
           </div>
 
           {/* Qty */}
@@ -759,11 +753,11 @@ function PDPContent() {
           {/* CTAs - text buttons + wishlist heart */}
           {product.isInStock === false && <p className="text-center text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg py-2 mb-3">This product is currently sold out</p>}
           <div className="flex gap-2 mb-6">
-            <button onClick={handleCart} disabled={isOOS || sizeStock===0 || (showHeightSelector && heightsForSelection.length>0 && !selHeight)}
+            <button onClick={handleCart} disabled={isOOS || sizeStock===0}
               className="flex-1 h-11 flex items-center justify-center rounded-xl border-2 border-primary px-3 text-[13px] font-bold text-primary hover:bg-primary hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               Add to Cart
             </button>
-            <button onClick={handleBuyNow} disabled={isOOS || sizeStock===0 || (showHeightSelector && heightsForSelection.length>0 && !selHeight)}
+            <button onClick={handleBuyNow} disabled={isOOS || sizeStock===0}
               className="flex-1 h-11 flex items-center justify-center rounded-xl bg-primary px-3 text-[13px] font-bold text-white hover:bg-primary-dark transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
               Buy Now
             </button>

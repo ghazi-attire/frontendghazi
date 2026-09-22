@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Package, RefreshCw, TicketPercent } from 'lucide-react'
-import { api } from '@/lib/api'
-import { formatPrice } from '@/lib/utils'
+import { RotateCcw, TicketPercent, ExternalLink, Package } from 'lucide-react'
+import { api, orderApi } from '@/lib/api'
+import { formatPrice, statusLabel } from '@/lib/utils'
 
 function formatDate(d) {
   if (!d) return '-'
@@ -80,7 +80,7 @@ export default function ReturnsSection() {
                       {r.admin_remarks && <p className="mt-2 text-xs font-semibold text-ink">Admin remarks: <span className="font-normal">{r.admin_remarks}</span></p>}
                     </div>
                   </div>
-                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${r.request_status==='approved'?'bg-green-100 text-green-700': r.request_status==='rejected'?'bg-red-100 text-red-700': r.request_status==='refunded'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700'}`}>{r.request_status}</span>
+                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${r.request_status==='approved'?'bg-green-100 text-green-700': r.request_status==='rejected'?'bg-red-100 text-red-700': r.request_status==='refunded'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700'}`}>{statusLabel(r.request_status)}</span>
                 </div>
               </div>
             ))}
@@ -102,7 +102,7 @@ export default function ReturnsSection() {
                 <p className="font-mono text-sm font-black tracking-widest text-ink">{c.code}</p>
                 <p className="mt-1 text-2xl font-black text-primary">{formatPrice(c.value)}</p>
                 <p className="mt-1 text-xs font-bold uppercase tracking-wide text-ink-muted">
-                  {c.couponStatus || c.coupon_status} · Expires: {formatDate(c.expiresAt || c.expires_at)}
+                  {statusLabel(c.couponStatus || c.coupon_status)} · Expires: {formatDate(c.expiresAt || c.expires_at)}
                 </p>
                 {c.usedOrderId && <p className="text-xs text-ink-muted">Used: {c.usedOrderId}</p>}
               </div>

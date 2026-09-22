@@ -103,12 +103,12 @@ export default function ProductCard({ product, hideCartActions = true }) {
   const onCart = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    addToCart(product, defaultSize, defaultColor)
+    addToCart({ ...product, sellPrice: displayPrice }, defaultSize, defaultColor)
   }
   const onBuyNow = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    addToCart(product, defaultSize, defaultColor)
+    addToCart({ ...product, sellPrice: displayPrice }, defaultSize, defaultColor)
     // Navigate to checkout after adding — use window location to preserve existing flow
     window.location.href = '/checkout'
   }
@@ -221,7 +221,7 @@ export default function ProductCard({ product, hideCartActions = true }) {
           <span className="shrink-0 text-[clamp(9px,2.7vw,12px)] leading-tight text-ink-faint line-through sm:text-sm">{formatPrice(product.mrp)}</span>
           <span className="shrink-0 text-[clamp(9px,2.5vw,11px)] font-bold uppercase leading-tight text-green-600 sm:text-xs">{product.off}% off</span>
         </div>
-        <p className="mt-2 truncate text-[13px] leading-5 text-ink-muted sm:text-[14px] sm:leading-6">{product.description}</p>
+        <h3 className="mt-2 truncate text-[13px] sm:text-[14px] font-bold leading-5 text-ink sm:leading-6">{product.name}</h3>
       </div>
 
       {!hideCart ? (

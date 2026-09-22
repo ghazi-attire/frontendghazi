@@ -163,7 +163,7 @@ export default function OrdersSection() {
                       <div className="flex-1 min-w-0">
                         <p className="text-[11px] text-ink-faint uppercase tracking-wide">{item.brand}</p>
                         <p className="text-[14px] font-semibold text-ink">{item.name}</p>
-                        <p className="text-[12px] text-ink-muted">Size: {item.size}{item.height ? ` · Height: ${item.height}` : ''} · Qty: {item.qty}</p>
+                        <p className="text-[12px] text-ink-muted">Color: {item.color || '-'} · Size: {item.size}{item.height ? ` · Height: ${item.height}` : ''} · Qty: {item.qty}</p>
                         {/* Return / Exchange buttons or active-request badge */}
                         {(canReturn || canExchange) && (
                           <div className="mt-2">

@@ -152,11 +152,11 @@ export default function HeroSection() {
           ))}
         </div>
 
-        <div className="mt-5 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <Link href={b.ctaLink || '/plp'} className="inline-flex justify-center rounded-xl bg-primary px-8 py-3.5 text-[14px] font-bold uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:text-[15px]">
+        <div className="mt-5 flex flex-row items-center justify-center gap-2.5 sm:gap-3.5 w-full max-w-md sm:max-w-none mx-auto">
+          <Link href={b.ctaLink || '/plp'} className="flex-1 sm:flex-initial inline-flex items-center justify-center text-center rounded-xl bg-primary px-4 xs:px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] xs:text-[13px] sm:text-[15px] font-bold uppercase tracking-[0.1em] xs:tracking-[0.14em] sm:tracking-[0.16em] text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 hover:bg-primary-dark whitespace-nowrap min-w-0">
             {b.cta || 'Shop Now'}
           </Link>
-          <Link href="/plp" className="inline-flex justify-center rounded-xl border border-line bg-white px-8 py-3 text-[14px] font-bold uppercase tracking-[0.16em] text-ink transition-all hover:border-primary hover:text-primary sm:text-[15px]">
+          <Link href="/plp" className="flex-1 sm:flex-initial inline-flex items-center justify-center text-center rounded-xl border border-line bg-white px-4 xs:px-6 sm:px-8 py-2.5 sm:py-3 text-[12px] xs:text-[13px] sm:text-[15px] font-bold uppercase tracking-[0.1em] xs:tracking-[0.14em] sm:tracking-[0.16em] text-ink transition-all hover:border-primary hover:text-primary whitespace-nowrap min-w-0">
             Browse All
           </Link>
         </div>

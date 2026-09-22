@@ -115,10 +115,14 @@ export default function CartPage() {
                   <p className="text-[15px] font-semibold text-ink hover:text-primary transition-colors line-clamp-2 mb-1">{item.product.name}</p>
                 </Link>
                 <div className="cart-item-options flex flex-wrap gap-2 text-[12px] text-ink-muted mb-3">
-                  <span className="bg-surface-alt px-2 py-0.5 rounded-md">Size: {item.size}</span>
-                  {item.height && <span className="bg-surface-alt px-2 py-0.5 rounded-md">Height: {item.height}</span>}
-                  <span className="flex items-center gap-1.5">
-                    Colour: <span style={{ background: item.color.hex }} className="inline-block w-3 h-3 rounded-full border border-line"/> {item.color.name || ''}
+                  <span className="bg-surface-alt px-2 py-0.5 rounded-md font-semibold text-ink">Size: {item.size}</span>
+                  {item.height ? (
+                    <span className="bg-surface-alt px-2 py-0.5 rounded-md font-semibold text-ink">Height: {item.height}</span>
+                  ) : (
+                    <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md text-[11px] font-bold">Height not selected</span>
+                  )}
+                  <span className="flex items-center gap-1.5 font-medium">
+                    Colour: <span style={{ background: item.color?.hex || '#111111' }} className="inline-block w-3 h-3 rounded-full border border-line"/> {item.color?.name || ''}
                   </span>
                 </div>
                 <div className="cart-item-actions flex items-center justify-between flex-wrap gap-3">
@@ -131,7 +135,7 @@ export default function CartPage() {
                     <button onClick={() => removeFromCart(item.key)} className="flex items-center gap-1.5 text-[12px] text-ink-muted hover:text-red-500 transition-colors">
                       <Trash2 size={13}/> Remove
                     </button>
-                    <span className="text-[16px] font-bold text-ink">{formatPrice(item.product.sellPrice * item.qty)}</span>
+                    <span className="text-[16px] font-bold text-ink">{formatPrice((item.sellPrice ?? item.product.sellPrice) * item.qty)}</span>
                   </div>
                 </div>
               </div>

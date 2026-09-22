@@ -180,7 +180,7 @@ export default function Header() {
     <>
       <header className={`sticky top-0 z-[200] bg-white transition-shadow duration-200 ${scrolled ? 'shadow-md' : 'border-b border-line'}`}>
         <div className="max-w-[1360px] mx-auto px-4 md:px-6">
-          <div className="flex items-center justify-between h-16 gap-4">
+          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 py-2 gap-4">
             {mobileSearchOpen ? (
               <div className="relative flex w-full items-center gap-2 md:hidden">
                 <button onClick={closeSearch} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-ink-muted hover:text-primary" aria-label="Close search">
@@ -202,19 +202,25 @@ export default function Header() {
               </div>
             ) : (
               <>
-                <button onClick={openDrawer} className="lg:hidden p-2 text-ink-muted hover:text-primary transition-colors" aria-label="Open menu">
-                  <Menu size={22}/>
-                </button>
+                <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2.5 flex-1 min-w-0 mr-1 sm:mr-3">
+                  <button onClick={openDrawer} className="lg:hidden p-1.5 -ml-1 text-ink-muted hover:text-primary transition-colors shrink-0" aria-label="Open menu">
+                    <Menu size={22}/>
+                  </button>
 
-                <Link href="/" className="flex-shrink-0">
-                  {branding.logoUrl ? (
-                    <img src={branding.logoUrl} alt="Ghazi Attire" className="h-12 md:h-14 max-w-[180px] object-contain" />
-                  ) : (
-                    <span className="font-display text-[28px] md:text-[30px] font-bold tracking-wider text-ink">
-                      Ghazi<span className="text-primary"> Attire</span>
-                    </span>
-                  )}
-                </Link>
+                  <Link href="/" className="flex items-center min-w-0 flex-shrink-0 py-1.5 md:py-2">
+                    {branding.logoUrl ? (
+                      <img
+                        src={branding.logoUrl}
+                        alt="Ghazi Attire"
+                        className="h-10 xs:h-11 sm:h-13 md:h-14 lg:h-15 max-w-[180px] xs:max-w-[210px] sm:max-w-[260px] md:max-w-[290px] lg:max-w-[320px] w-auto object-contain object-left transition-all"
+                      />
+                    ) : (
+                      <span className="font-display text-[22px] xs:text-[25px] sm:text-[28px] md:text-[32px] font-bold tracking-wider text-ink whitespace-nowrap truncate">
+                        Ghazi<span className="text-primary"> Attire</span>
+                      </span>
+                    )}
+                  </Link>
+                </div>
 
                 <nav className="hidden lg:flex items-center gap-1 self-stretch">
                   {NAV.map(l => {
@@ -332,7 +338,7 @@ export default function Header() {
           <div className={`absolute inset-0 bg-black/50 ${drawerClosing ? 'opacity-0 transition-opacity duration-200' : 'drawer-backdrop-in'}`} onClick={closeDrawer}/>
           <div className={`${drawerClosing ? 'drawer-left-out' : 'drawer-left-in'} absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col shadow-2xl`}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-line">
-              {branding.logoUrl ? <img src={branding.logoUrl} alt="Ghazi Attire" className="h-10 max-w-[170px] object-contain" /> : <span className="font-display text-xl font-bold">Ghazi<span className="text-primary"> Attire</span></span>}
+              {branding.logoUrl ? <img src={branding.logoUrl} alt="Ghazi Attire" className="h-12 sm:h-14 max-w-[210px] sm:max-w-[240px] object-contain" /> : <span className="font-display text-2xl font-bold">Ghazi<span className="text-primary"> Attire</span></span>}
               <button onClick={closeDrawer} className="text-ink-muted hover:text-ink"><X size={20}/></button>
             </div>
             <nav className="flex flex-col py-2 overflow-y-auto flex-1">

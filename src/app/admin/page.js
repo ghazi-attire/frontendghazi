@@ -13,7 +13,7 @@ import { adminApi, authApi } from '@/lib/api'
 import { downloadBlob } from '@/lib/csv'
 import { downloadInvoice } from '@/lib/invoice'
 import { applyTheme, buildThemeFromPrimary, DEFAULT_THEME, normalizeTheme, THEME_PRESETS } from '@/lib/theme'
-import { computeDiscountPercent, formatPrice } from '@/lib/utils'
+import { computeDiscountPercent, formatPrice, statusLabel } from '@/lib/utils'
 import { DEFAULT_ABOUT, DEFAULT_CONTACT } from '@/lib/pageContent'
 import ProductCatalogTable from '@/components/admin/ProductCatalogTable'
 
@@ -131,8 +131,6 @@ function buildVariantRows(colorVariants = []) {
       color: color.name,
       hex: color.hex,
       size: size.size,
-      height: String(size.height || '').trim(),
-      sku: String(size.sku || '').trim(),
       stock: Number(size.stock || 0),
       mrp: Number(size.mrp || 0),
       sellPrice: Number(size.sellPrice || 0),
@@ -618,7 +616,7 @@ export default function AdminPage() {
         ? { ids: selectedOrders.join(',') }
         : { ...orderFilters, limit: 5000 }
       const blob = await adminApi.exportOrdersCsv(params)
-      downloadBlob(blob, `staffarc-orders-${Date.now()}.csv`)
+      downloadBlob(blob, `ghazi-attire-orders-${Date.now()}.csv`)
       toast.success(selectedOrders.length ? `Exported ${selectedOrders.length} selected order(s)` : 'Exported filtered orders')
     } catch (error) {
       toast.error(error.message || 'Could not export orders')
@@ -1283,7 +1281,7 @@ function ProductForm({ form, setForm, categories, catalogColors = [], catalogSiz
     </div>
     <div className="grid gap-3 md:grid-cols-2"><Field label="Tag" value={form.tag} onChange={v => set('tag', v)} readOnly={readOnly} /><Field label="Offer tag" value={form.offerTag} onChange={v => set('offerTag', v)} readOnly={readOnly} /></div>
     <PremiumToggle label="Featured product" checked={form.isFeatured} disabled={readOnly} onChange={checked => set('isFeatured', checked)} />
-    <ColorVariantEditor rows={form.colorVariants} colors={catalogColors} sizes={catalogSizes} heights={catalogHeights} baseMrp={form.mrp} baseSellPrice={form.sellPrice} onChange={rows => set('colorVariants', rows)} onPreview={onPreview} readOnly={readOnly} />
+    <ColorVariantEditor rows={form.colorVariants} colors={catalogColors} sizes={catalogSizes} baseMrp={form.mrp} baseSellPrice={form.sellPrice} onChange={rows => set('colorVariants', rows)} onPreview={onPreview} readOnly={readOnly} />
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface-alt px-4 py-3">
       <div>
         <p className="text-sm font-black text-ink">Variant mapping</p>
@@ -1451,14 +1449,14 @@ function MediaGrid({ items, type = 'image', onPreview, onRemove, readOnly = fals
   </div>
 }
 
-function ColorVariantEditor({ rows, colors = [], sizes = [], heights = [], baseMrp = 0, baseSellPrice = 0, onChange, onPreview, readOnly = false }) {
+function ColorVariantEditor({ rows, colors = [], sizes = [], baseMrp = 0, baseSellPrice = 0, onChange, onPreview, readOnly = false }) {
   const updateColor = (index, patch) => onChange(rows.map((row, i) => i === index ? { ...row, ...patch } : row))
   const updateSizes = (index, sizes) => updateColor(index, { sizes })
   const updateImages = (index, images) => updateColor(index, { images })
 
   return <div>
     <SectionLabel label="Colors, images & stock" />
-    <p className="mb-3 text-xs text-ink-muted">New variants inherit base pricing; you can override each variant’s MRP and selling price. Add height per variant (e.g. 5&apos;8&quot;).</p>
+    <p className="mb-3 text-xs text-ink-muted">New variants inherit base pricing; you can override each variant’s MRP and selling price.</p>
     <div className="space-y-4">
       {rows.map((row, index) => (
         <div key={index} className="rounded-xl border border-line bg-surface-alt p-4">
@@ -1480,25 +1478,17 @@ function ColorVariantEditor({ rows, colors = [], sizes = [], heights = [], baseM
           </div>
 
           <div className="mt-4">
-            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em] text-ink-muted">Sizes · Height & stock</p>
+            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em] text-ink-muted">Sizes & stock</p>
             <div className="space-y-2">
-              <div className="hidden gap-2 px-1 text-[10px] font-black uppercase tracking-[0.1em] text-ink-muted md:grid" style={{ gridTemplateColumns: 'minmax(110px,1fr) minmax(110px,1fr) 100px 100px 80px 44px' }}>
-                <span>Size</span><span>Height</span><span>Selling price</span><span>MRP</span><span>Stock</span><span />
+              <div className="hidden gap-2 px-1 text-[10px] font-black uppercase tracking-[0.1em] text-ink-muted md:grid" style={{ gridTemplateColumns: 'minmax(130px,1fr) 110px 110px 90px 44px' }}>
+                <span>Size</span><span>Selling price</span><span>MRP</span><span>Stock</span><span />
               </div>
               {(row.sizes || []).map((size, sizeIndex) => (
-                <div key={sizeIndex} className="grid gap-2 md:grid-cols-[minmax(110px,1fr)_minmax(110px,1fr)_100px_100px_80px_44px]">
+                <div key={sizeIndex} className="grid gap-2 md:grid-cols-[minmax(130px,1fr)_110px_110px_90px_44px]">
                   <select value={size.size ?? ''} disabled={readOnly} onChange={e => updateSizes(index, row.sizes.map((item, i) => i === sizeIndex ? { ...item, size: e.target.value } : item))} className="h-10 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-[#eef0f3] disabled:text-ink-muted">
                     <option value="">Select size</option>
                     {sizes.map(option => <option key={option.id || option.size} value={option.size}>{option.size}</option>)}
                   </select>
-                  {heights.length ? (
-                    <select value={size.height ?? ''} disabled={readOnly} onChange={e => updateSizes(index, row.sizes.map((item, i) => i === sizeIndex ? { ...item, height: e.target.value } : item))} className="h-10 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-[#eef0f3] disabled:text-ink-muted">
-                      <option value="">No height</option>
-                      {heights.map(h => <option key={h.id || h.height} value={h.height}>{h.height}</option>)}
-                    </select>
-                  ) : (
-                    <input aria-label="Height" value={size.height ?? ''} disabled={readOnly} onChange={e => updateSizes(index, row.sizes.map((item, i) => i === sizeIndex ? { ...item, height: e.target.value } : item))} placeholder="e.g. 5&apos;8&quot;" className="h-10 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-primary" />
-                  )}
                   <input aria-label="Selling price" type="number" min="0" value={size.sellPrice ?? (baseSellPrice > 0 ? baseSellPrice : '')} disabled={readOnly} onChange={e => updateSizes(index, row.sizes.map((item, i) => i === sizeIndex ? { ...item, sellPrice: Number(e.target.value) || undefined } : item))} placeholder="Selling price" className="h-10 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-primary" />
                   <input aria-label="MRP" type="number" min="0" value={size.mrp ?? (baseMrp > 0 ? baseMrp : '')} disabled={readOnly} onChange={e => updateSizes(index, row.sizes.map((item, i) => i === sizeIndex ? { ...item, mrp: Number(e.target.value) || undefined } : item))} placeholder="MRP" className="h-10 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-primary" />
                   <input aria-label="Stock" type="number" min="0" value={size.stock ?? 0} disabled={readOnly} onChange={e => updateSizes(index, row.sizes.map((item, i) => i === sizeIndex ? { ...item, stock: Number(e.target.value) } : item))} placeholder="Stock" className="h-10 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-[#eef0f3] disabled:text-ink-muted" />
@@ -1506,14 +1496,14 @@ function ColorVariantEditor({ rows, colors = [], sizes = [], heights = [], baseM
                 </div>
               ))}
             </div>
-            {!readOnly && <button onClick={() => updateSizes(index, [...(row.sizes || []), { size: '', height: '', stock: 0, mrp: baseMrp > 0 ? baseMrp : undefined, sellPrice: baseSellPrice > 0 ? baseSellPrice : undefined }])} className="mt-2 h-9 rounded-lg border border-line px-3 text-xs font-bold hover:border-primary hover:text-primary">Add quantity</button>}
+            {!readOnly && <button onClick={() => updateSizes(index, [...(row.sizes || []), { size: '', stock: 0, mrp: baseMrp > 0 ? baseMrp : undefined, sellPrice: baseSellPrice > 0 ? baseSellPrice : undefined }])} className="mt-2 h-9 rounded-lg border border-line px-3 text-xs font-bold hover:border-primary hover:text-primary">Add size</button>}
           </div>
 
           {!readOnly && rows.length > 1 && <button onClick={() => onChange(rows.filter((_, i) => i !== index))} className="mt-4 text-xs font-bold text-red-500">Remove color</button>}
         </div>
       ))}
     </div>
-    {!readOnly && <button onClick={() => onChange([...rows, { name: '', hex: '#111111', images: [''], sizes: [{ size: '', height: '', stock: 0, mrp: baseMrp > 0 ? baseMrp : undefined, sellPrice: baseSellPrice > 0 ? baseSellPrice : undefined }] }])} className="mt-3 h-10 w-full rounded-lg border border-line text-sm font-bold hover:border-primary hover:text-primary">Add color</button>}
+    {!readOnly && <button onClick={() => onChange([...rows, { name: '', hex: '#111111', images: [''], sizes: [{ size: '', stock: 0, mrp: baseMrp > 0 ? baseMrp : undefined, sellPrice: baseSellPrice > 0 ? baseSellPrice : undefined }] }])} className="mt-3 h-10 w-full rounded-lg border border-line text-sm font-bold hover:border-primary hover:text-primary">Add color</button>}
   </div>
 }
 
@@ -1523,7 +1513,7 @@ function VariantMappingModal({ rows, onClose }) {
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <div>
           <h3 className="font-display text-2xl font-black">Variant mapping</h3>
-          <p className="text-xs text-ink-muted">Color + size + height combinations with stock and image count.</p>
+          <p className="text-xs text-ink-muted">Color + size combinations with stock and image count.</p>
         </div>
         <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-lg border border-line hover:border-primary hover:text-primary"><X size={18}/></button>
       </div>
@@ -1532,15 +1522,14 @@ function VariantMappingModal({ rows, onClose }) {
           <table className="w-full text-left text-sm">
             <thead className="bg-[#f8f9fb] text-xs uppercase tracking-[0.12em] text-ink-muted">
               <tr>
-                {['Color', 'Size', 'Height', 'Stock', 'Images'].map(label => <th key={label} className="px-4 py-3 font-black">{label}</th>)}
+                {['Color', 'Size', 'Stock', 'Images'].map(label => <th key={label} className="px-4 py-3 font-black">{label}</th>)}
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {rows.map((row, index) => (
-                <tr key={`${row.color}-${row.size}-${row.height}-${index}`}>
+                <tr key={`${row.color}-${row.size}-${index}`}>
                   <td className="px-4 py-3 font-semibold"><span className="inline-flex items-center gap-2"><span className="h-4 w-4 rounded-full border border-line" style={{ background: row.hex }} />{row.color}</span></td>
                   <td className="px-4 py-3 font-semibold">{row.size}</td>
-                  <td className="px-4 py-3 font-semibold">{row.height || '—'}</td>
                   <td className="px-4 py-3 font-semibold">{row.stock}</td>
                   <td className="px-4 py-3 font-semibold">{row.images}</td>
                 </tr>
@@ -1760,12 +1749,12 @@ function buildWhatsAppMessage(order) {
     products.forEach((item, idx) => {
       lines.push('')
       lines.push(`${idx + 1}. ${item.name || 'Product'}`)
-      if (item.color) lines.push(`Color: ${item.color}`)
       lines.push(`Size: ${item.size || '-'}`)
-      if (item.height) lines.push(`Height: ${item.height}`)
+      lines.push(`Color: ${item.color || '-'}`)
+      lines.push(`Height: ${item.height || item.height_snapshot || '-'}`)
       if (item.sku) lines.push(`SKU: ${item.sku}`)
-      lines.push(`Price: ${formatPrice(item.unitPrice || 0)}`)
-      lines.push(`Qty: ${item.qty || item.quantity || 1}`)
+      lines.push(`Quantity: ${item.qty || item.quantity || 1}`)
+      lines.push(`Price: ${formatPrice(item.unitPrice || item.price || 0)}`)
       if (item.image) lines.push(`Image: ${item.image}`)
     })
   }
@@ -1872,11 +1861,11 @@ function OrdersPanel({ orders, filters, selectedOrders, onFiltersChange, onApply
         </label>
         <SelectField label="Order status" value={filters.status} onChange={v => setFilter('status', v)}>
           <option value="">All statuses</option>
-          {ORDER_STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+          {ORDER_STATUS_OPTIONS.map(status => <option key={status} value={status}>{statusLabel(status)}</option>)}
         </SelectField>
         <SelectField label="Payment status" value={filters.paymentStatus} onChange={v => setFilter('paymentStatus', v)}>
           <option value="">All payments</option>
-          {PAYMENT_STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+          {PAYMENT_STATUS_OPTIONS.map(status => <option key={status} value={status}>{statusLabel(status)}</option>)}
         </SelectField>
         <SelectField label="Date range" value={filters.days} onChange={v => setFilter('days', v)}>
           {DATE_PRESETS.map(([value, label]) => <option key={value || 'all'} value={value}>{label}</option>)}
@@ -1897,7 +1886,7 @@ function OrdersPanel({ orders, filters, selectedOrders, onFiltersChange, onApply
       <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
         <span className="text-sm font-black text-primary">{selectedOrders.length} selected</span>
         {ORDER_STATUS_OPTIONS.map(status => (
-          <button key={status} onClick={() => onBulkUpdate({ status })} className="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-bold capitalize hover:border-primary hover:text-primary">{status}</button>
+          <button key={status} onClick={() => onBulkUpdate({ status })} className="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-bold hover:border-primary hover:text-primary">{statusLabel(status)}</button>
         ))}
       </div>
     )}
@@ -1936,8 +1925,8 @@ function OrdersPanel({ orders, filters, selectedOrders, onFiltersChange, onApply
                   <td className="px-4 py-3 font-semibold text-ink-mid">{row.customerPhone || '-'}</td>
                   <td className="px-4 py-3 font-semibold text-ink-mid">{row.itemCount || 0}</td>
                   <td className="px-4 py-3 font-semibold text-ink-mid">{money(row.total)}</td>
-                  <td className="px-4 py-3 font-semibold text-ink-mid">{row.paymentStatus}</td>
-                  <td className="px-4 py-3 font-semibold text-ink-mid">{row.status}</td>
+                  <td className="px-4 py-3 font-semibold text-ink-mid">{statusLabel(row.paymentStatus)}</td>
+                  <td className="px-4 py-3 font-semibold text-ink-mid">{statusLabel(row.status)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
                       <OrderActions row={row} reload={reload} />
@@ -2180,10 +2169,10 @@ function OrderDetailModal({ order, onClose, onUpdated }) {
 
         <div className="mt-5 flex flex-wrap gap-2">
           <SelectField label="Update status" value={order.status} onChange={async status => { await adminApi.updateOrder(order.id, { status }); toast.success('Order updated'); onUpdated() }}>
-            {ORDER_STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+            {ORDER_STATUS_OPTIONS.map(status => <option key={status} value={status}>{statusLabel(status)}</option>)}
           </SelectField>
           <SelectField label="Payment status" value={order.paymentStatus} onChange={async paymentStatus => { await adminApi.updateOrder(order.id, { paymentStatus }); toast.success('Payment status updated'); onUpdated() }}>
-            {PAYMENT_STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+            {PAYMENT_STATUS_OPTIONS.map(status => <option key={status} value={status}>{statusLabel(status)}</option>)}
           </SelectField>
         </div>
       </div>
@@ -2232,7 +2221,7 @@ function LoadingOverlay({ message }) {
 }
 
 function OrderActions({ row, reload }) {
-  return <select defaultValue={row.status} onChange={async e => { await adminApi.updateOrder(row.id, { status: e.target.value }); toast.success('Order updated'); await reload() }} className="h-9 rounded-lg border border-line bg-white px-2 text-xs font-bold">{ORDER_STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}</select>
+  return <select defaultValue={row.status} onChange={async e => { await adminApi.updateOrder(row.id, { status: e.target.value }); toast.success('Order updated'); await reload() }} className="h-9 rounded-lg border border-line bg-white px-2 text-xs font-bold">{ORDER_STATUS_OPTIONS.map(status => <option key={status} value={status}>{statusLabel(status)}</option>)}</select>
 }
 
 function UserActions({ row, reload }) {

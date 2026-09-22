@@ -203,14 +203,18 @@ export default function CheckoutPage() {
   }, [selAddr?.id, selAddr?.state, selAddr?.pincode, cartTotal])
 
   const createOrder = () => {
+    const missingHeight = cart.find(item => !String(item.height || '').trim())
+    if (missingHeight) {
+      throw new Error(`Height is required for ${missingHeight.product?.name || 'items in your cart'}. Please return to cart.`)
+    }
     const items = Object.values(cart.reduce((acc, item) => {
       const color = item.color?.name || item.color?.hex || item.color || ''
-      const height = item.height || ''
+      const height = String(item.height || '').trim()
       const sku = item.sku || ''
       const key = `${item.product.id}|${item.size}|${color}|${height}`
       acc[key] = acc[key]
         ? { ...acc[key], quantity: acc[key].quantity + item.qty }
-        : { productId: item.product.id, productSlug: item.product.slug, size: item.size, color, height: height || null, sku: sku || null, quantity: item.qty }
+        : { productId: item.product.id, productSlug: item.product.slug, size: item.size, color, height, sku: sku || null, quantity: item.qty }
       return acc
     }, {}))
     return orderApi.create({
@@ -436,7 +440,7 @@ export default function CheckoutPage() {
                       <p className="text-[14px] font-semibold text-ink">{item.product.name}</p>
                       <p className="text-[12px] text-ink-muted">Size: {item.size}{item.height ? ` · Height: ${item.height}` : ''} · Qty: {item.qty}</p>
                     </div>
-                    <p className="font-bold text-[15px] flex-shrink-0">{formatPrice(item.product.sellPrice*item.qty)}</p>
+                    <p className="font-bold text-[15px] flex-shrink-0">{formatPrice((item.sellPrice ?? item.product.sellPrice)*item.qty)}</p>
                   </div>
                 ))}
               </div>
@@ -517,7 +521,7 @@ export default function CheckoutPage() {
                     <p className="text-[13px] font-medium text-ink truncate">{item.product.name}</p>
                     <p className="text-[11px] text-ink-faint">{item.size}{item.height ? ` · ${item.height}` : ''}</p>
                   </div>
-                  <p className="text-[13px] font-bold flex-shrink-0">{formatPrice(item.product.sellPrice*item.qty)}</p>
+                  <p className="text-[13px] font-bold flex-shrink-0">{formatPrice((item.sellPrice ?? item.product.sellPrice)*item.qty)}</p>
                 </div>
               ))}
             </div>

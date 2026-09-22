@@ -1,3 +1,5 @@
+import { statusLabel } from '@/lib/utils'
+
 const money = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`
 
 function escapeHtml(value) {
@@ -21,7 +23,7 @@ function formatAddress(address = {}) {
 function itemRows(order, compact = false) {
   return (order.products || []).map(item => `
     <tr>
-      <td>${escapeHtml(item.name)}${compact ? '' : `<div class="muted">${escapeHtml(item.brand)} · ${escapeHtml(item.size)} · ${escapeHtml(item.color || '-')}</div>`}</td>
+      <td>${escapeHtml(item.name)}${compact ? '' : `<div class="muted">${escapeHtml(item.brand)} · Size: ${escapeHtml(item.size)}${item.height ? ` · Height: ${escapeHtml(item.height)}` : ''} · Color: ${escapeHtml(item.color || '-')}</div>`}</td>
       <td class="center">${item.qty}</td>
       <td class="right">${money(item.unitPrice)}</td>
       <td class="right">${money((item.unitPrice || 0) * (item.qty || 0))}</td>
@@ -95,11 +97,11 @@ export function buildInvoiceHtml(order, format = 'a4') {
   <div class="grid">
     <div class="box">
       <div class="label">Payment</div>
-      <div>${escapeHtml(order.paymentMethod || '-')} · ${escapeHtml(order.paymentStatus || '-')}</div>
+      <div>${escapeHtml(order.paymentMethod || '-')} · ${escapeHtml(statusLabel(order.paymentStatus))}</div>
     </div>
     <div class="box">
       <div class="label">Order Status</div>
-      <div>${escapeHtml(order.status || '-')}</div>
+      <div>${escapeHtml(statusLabel(order.status))}</div>
     </div>
   </div>
 
