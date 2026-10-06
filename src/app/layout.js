@@ -21,6 +21,18 @@ const montserrat = Montserrat({
 export const metadata = {
   title: 'Ghazi Attire — Premium Fashion',
   description: 'Curated fashion for those who define their own style.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' }
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }
+    ]
+  }
 }
 
 const themeInitScript = `try{var t=JSON.parse(localStorage.getItem('gz-theme'));if(t&&t.primary){var r=document.documentElement;r.style.setProperty('--color-primary',t.primary);r.style.setProperty('--color-primary-dark',t.primaryDark);r.style.setProperty('--color-primary-light',t.primaryLight)}}catch(e){}`
